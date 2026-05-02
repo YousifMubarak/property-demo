@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Property Management System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-light:#E8C97A;--gold-dark:#9A7A30;
+  --bg-dark:#0A0A0A;--bg-card:#111111;--bg-card2:#181818;--bg-card3:#1E1E1E;
+  --text-primary:#F5F0E8;--text-secondary:#A89878;--text-muted:#6B6050;
+  --border:#2A2520;--border-gold:rgba(201,168,76,0.3);
+  --success:#2ECC71;--danger:#E74C3C;--warning:#F39C12;--info:#3498DB;
+  --radius:10px;--radius-lg:16px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg-dark);color:var(--text-primary);min-height:100vh;font-size:14px}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;min-width:220px;background:var(--bg-card);border-right:1px solid var(--border-gold);display:flex;flex-direction:column}
+.logo{padding:20px 16px;border-bottom:1px solid var(--border-gold);display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.5px;line-height:1.3}
+.logo-sub{font-size:10px;color:var(--text-muted)}
+nav{flex:1;padding:12px 8px;overflow-y:auto}
+.nav-section{font-size:10px;color:var(--text-muted);letter-spacing:1.5px;padding:12px 8px 6px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--text-secondary);font-size:13px;transition:all .2s;margin-bottom:2px;border:1px solid transparent}
+.nav-item:hover{background:var(--bg-card2);color:var(--text-primary);border-color:var(--border-gold)}
+.nav-item.active{background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));color:var(--gold);border-color:var(--border-gold)}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;background:var(--bg-card);border-bottom:1px solid var(--border-gold);display:flex;align-items:center;padding:0 20px;gap:12px}
+.topbar-title{font-size:16px;font-weight:600;color:var(--text-primary);flex:1}
+.lang-toggle{display:flex;background:var(--bg-card2);border:1px solid var(--border-gold);border-radius:8px;overflow:hidden}
+.lang-btn{padding:6px 12px;font-size:12px;cursor:pointer;transition:all .2s;color:var(--text-secondary);background:transparent;border:none}
+.lang-btn.active{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#000;font-weight:600}
+.notif-btn{width:36px;height:36px;background:var(--bg-card2);border:1px solid var(--border-gold);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:16px}
+.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg-card)}
+.user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#000;cursor:pointer}
+.search-box{flex:1;max-width:260px;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-primary);font-size:13px;outline:none;transition:border .2s}
+.search-box:focus{border-color:var(--border-gold)}
+.search-box::placeholder{color:var(--text-muted)}
+.content{flex:1;overflow-y:auto;padding:20px}
+.page{display:none}
+.page.active{display:block}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:16px;transition:all .2s;cursor:default}
+.stat-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+.stat-label{font-size:11px;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-size:24px;font-weight:700;color:var(--gold);line-height:1}
+.stat-sub{font-size:11px;color:var(--text-secondary);margin-top:4px}
+.stat-icon{font-size:22px;margin-bottom:8px}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:12px}
+.kpi-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.kpi-icon.gold{background:rgba(201,168,76,.15)}
+.kpi-icon.green{background:rgba(46,204,113,.15)}
+.kpi-icon.red{background:rgba(231,76,60,.15)}
+.kpi-info .label{font-size:11px;color:var(--text-muted)}
+.kpi-info .value{font-size:18px;font-weight:700;color:var(--text-primary)}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:15px;font-weight:600;color:var(--text-primary)}
+.btn{padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;border:none;font-weight:600;transition:all .2s}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#000}
+.btn-gold:hover{opacity:.9}
+.btn-outline{background:transparent;border:1px solid var(--border-gold);color:var(--gold);cursor:pointer}
+.btn-outline:hover{background:rgba(201,168,76,.1)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.table-wrap{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg-card2);padding:11px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid var(--border-gold)}
+td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-secondary)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(201,168,76,.03);color:var(--text-primary)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-success{background:rgba(46,204,113,.15);color:#2ECC71}
+.badge-danger{background:rgba(231,76,60,.15);color:#E74C3C}
+.badge-warning{background:rgba(243,156,18,.15);color:#F39C12}
+.badge-info{background:rgba(52,152,219,.15);color:#3498DB}
+.badge-gold{background:rgba(201,168,76,.15);color:var(--gold)}
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:20px}
+.chart-card{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:18px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:14px}
+.chart-wrap{position:relative;height:180px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.detail-card{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:18px}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-key{font-size:12px;color:var(--text-muted)}
+.detail-val{font-size:13px;color:var(--text-primary);font-weight:500}
+.timeline{padding:16px 0}
+.tl-item{display:flex;gap:14px;margin-bottom:20px}
+.tl-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;margin-top:2px}
+.tl-dot.done{background:rgba(46,204,113,.2);border:2px solid var(--success)}
+.tl-dot.active-step{background:rgba(201,168,76,.2);border:2px solid var(--gold);animation:pulse 1.5s infinite}
+.tl-dot.pending{background:var(--bg-card2);border:2px solid var(--border)}
+.tl-content .tl-title{font-size:13px;font-weight:600;color:var(--text-primary)}
+.tl-content .tl-time{font-size:11px;color:var(--text-muted);margin-top:2px}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,.4)}50%{box-shadow:0 0 0 6px rgba(201,168,76,0)}}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 56px);padding:20px}
+.login-card{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:20px;padding:36px;width:100%;max-width:380px}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .icon{font-size:36px;margin-bottom:8px}
+.login-logo h2{font-size:20px;color:var(--gold);font-weight:700}
+.login-logo p{font-size:12px;color:var(--text-muted);margin-top:4px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text-primary);font-size:14px;outline:none;transition:border .2s}
+.form-input:focus{border-color:var(--gold)}
+.role-select{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.role-opt{padding:8px;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;font-size:11px;color:var(--text-muted);transition:all .2s;line-height:1.6}
+.role-opt.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1)}
+.btn-full{width:100%;padding:12px;font-size:14px;border-radius:10px}
+.maint-form{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:22px;max-width:620px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row-full{margin-bottom:14px}
+.form-select{width:100%;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-size:13px;outline:none}
+.form-textarea{width:100%;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text-primary);font-size:13px;outline:none;resize:vertical;min-height:80px}
+.upload-area{border:2px dashed var(--border-gold);border-radius:8px;padding:20px;text-align:center;cursor:pointer;color:var(--text-muted);font-size:13px;transition:all .2s}
+.upload-area:hover{border-color:var(--gold);color:var(--gold)}
+.priority-opts{display:flex;gap:8px}
+.prio-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer;transition:all .2s}
+.prio-btn.active.high{border-color:#E74C3C;color:#E74C3C;background:rgba(231,76,60,.1)}
+.prio-btn.active.med{border-color:#F39C12;color:#F39C12;background:rgba(243,156,18,.1)}
+.prio-btn.active.low{border-color:#2ECC71;color:#2ECC71;background:rgba(46,204,113,.1)}
+.notif-panel{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);overflow:hidden;max-width:480px}
+.notif-header{padding:14px 18px;background:var(--bg-card2);border-bottom:1px solid var(--border-gold);display:flex;align-items:center;justify-content:space-between}
+.notif-item{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+.notif-item:last-child{border-bottom:none}
+.notif-item.unread{background:rgba(201,168,76,.03)}
+.notif-icon-box{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.notif-icon-box.red{background:rgba(231,76,60,.15)}
+.notif-icon-box.gold{background:rgba(201,168,76,.15)}
+.notif-icon-box.blue{background:rgba(52,152,219,.15)}
+.notif-title{font-size:13px;font-weight:600;color:var(--text-primary)}
+.notif-desc{font-size:12px;color:var(--text-muted);margin-top:2px}
+.notif-time-txt{font-size:11px;color:var(--text-muted);margin-left:auto;flex-shrink:0;white-space:nowrap}
+.gold-line{height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin-bottom:20px}
+.pay-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.pay-card{background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:18px;text-align:center}
+.pay-amount{font-size:26px;font-weight:700;margin-top:4px}
+.pay-label-txt{font-size:12px;color:var(--text-muted)}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer;transition:all .2s}
+.filter-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1)}
+.rtl{direction:rtl;text-align:right}
+.rtl th,.rtl td{text-align:right}
+.rtl .nav-badge{margin-left:0;margin-right:auto}
+.rtl .notif-time-txt{margin-left:0;margin-right:auto}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-gold);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🏢</div>
+      <div>
+        <div class="logo-text" id="logo-text">PMS</div>
+        <div class="logo-sub" id="logo-sub">Property Management</div>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-section" id="nav-main-label">Main</div>
+      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="icon">📊</span><span id="nl-dashboard">Dashboard</span></div>
+      <div class="nav-item" onclick="showPage('tenants')" id="nav-tenants"><span class="icon">👥</span><span id="nl-tenants">Tenants</span></div>
+      <div class="nav-item" onclick="showPage('payments')" id="nav-payments"><span class="icon">💳</span><span id="nl-payments">Payments</span><span class="nav-badge">2</span></div>
+      <div class="nav-section" id="nav-ops-label">Operations</div>
+      <div class="nav-item" onclick="showPage('maintenance-new')" id="nav-maint"><span class="icon">🔧</span><span id="nl-maint">Maintenance</span><span class="nav-badge">3</span></div>
+      <div class="nav-item" onclick="showPage('maint-list')" id="nav-maint-list"><span class="icon">📋</span><span id="nl-maint-list">Requests</span></div>
+      <div class="nav-item" onclick="showPage('tracking')" id="nav-track"><span class="icon">📍</span><span id="nl-track">Tracking</span></div>
+      <div class="nav-section" id="nav-sys-label">System</div>
+      <div class="nav-item" onclick="showPage('notifications')" id="nav-notif"><span class="icon">🔔</span><span id="nl-notif">Notifications</span><span class="nav-badge">5</span></div>
+      <div class="nav-item" onclick="showPage('login')" id="nav-login"><span class="icon">🔑</span><span id="nl-login">Login / Roles</span></div>
+    </nav>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <input class="search-box" type="text" id="search-input" placeholder="Search tenants..." oninput="filterTenants(this.value)">
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="btn-ar" onclick="setLang('ar')">AR</button>
+      </div>
+      <div class="notif-btn" onclick="showPage('notifications')">🔔<div class="notif-dot"></div></div>
+      <div class="user-avatar">AM</div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="gold-line"></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">🏢</div><div class="stat-label" id="s1">Properties</div><div class="stat-value">24</div><div class="stat-sub" id="s1b">Units managed</div></div>
+          <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label" id="s2">Tenants</div><div class="stat-value">18</div><div class="stat-sub" id="s2b">Active leases</div></div>
+          <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-label" id="s3">Contracts</div><div class="stat-value">16</div><div class="stat-sub" id="s3b">Active</div></div>
+          <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label" id="s4">Revenue</div><div class="stat-value" style="font-size:18px">BD 12,400</div><div class="stat-sub" id="s4b">This month</div></div>
+          <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-label" id="s5">Late</div><div class="stat-value" style="color:var(--danger)">3</div><div class="stat-sub" id="s5b">Overdue payments</div></div>
+          <div class="stat-card"><div class="stat-icon">🔧</div><div class="stat-label" id="s6">Maintenance</div><div class="stat-value" style="color:var(--warning)">5</div><div class="stat-sub" id="s6b">Open requests</div></div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-icon gold">💰</div><div class="kpi-info"><div class="label" id="kpi1l">Collection Rate</div><div class="value" style="color:var(--gold)">83%</div></div></div>
+          <div class="kpi-card"><div class="kpi-icon green">✅</div><div class="kpi-info"><div class="label" id="kpi2l">Paid Tenants</div><div class="value" style="color:var(--success)">15 / 18</div></div></div>
+          <div class="kpi-card"><div class="kpi-icon red">❌</div><div class="kpi-info"><div class="label" id="kpi3l">Overdue</div><div class="value" style="color:var(--danger)">BD 2,100</div></div></div>
+        </div>
+        <div class="section-header">
+          <div class="section-title" id="tenant-table-title">Tenant Overview</div>
+          <button class="btn btn-gold btn-sm" onclick="showPage('tenants')" id="view-all-btn">View All →</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th id="th-name">Tenant</th><th id="th-unit">Unit</th><th id="th-type">Type</th>
+            <th id="th-rent">Rent (BD)</th><th id="th-status">Status</th>
+            <th id="th-due">Due Date</th><th id="th-contract">Contract</th><th id="th-action">Action</th>
+          </tr></thead><tbody id="tenants-tbody"></tbody></table>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card"><div class="chart-title" id="chart1-title">Monthly Revenue (BD)</div><div class="chart-wrap"><canvas id="revenueChart"></canvas></div></div>
+          <div class="chart-card"><div class="chart-title" id="chart2-title">Collection Status</div><div class="chart-wrap"><canvas id="collectionChart"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- TENANTS -->
+      <div class="page" id="page-tenants">
+        <div class="gold-line"></div>
+        <div class="section-header">
+          <div class="section-title" id="all-tenants-title">All Tenants</div>
+          <input class="search-box" type="text" id="search-input2" placeholder="Search..." oninput="filterTenants(this.value)" style="max-width:180px">
+        </div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="filterStatus('all',this)" id="f-all">All</button>
+          <button class="filter-btn" onclick="filterStatus('paid',this)" id="f-paid">Paid ✅</button>
+          <button class="filter-btn" onclick="filterStatus('late',this)" id="f-late">Late ⚠️</button>
+          <button class="filter-btn" onclick="filterStatus('apartment',this)" id="f-apt">Apartments</button>
+          <button class="filter-btn" onclick="filterStatus('shop',this)" id="f-shop">Shops</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th id="th2-name">Tenant</th><th id="th2-unit">Unit</th><th id="th2-type">Type</th>
+            <th id="th2-rent">Rent</th><th id="th2-status">Payment</th>
+            <th id="th2-contract">Contract</th><th id="th2-action">Action</th>
+          </tr></thead><tbody id="tenants-tbody2"></tbody></table>
+        </div>
+      </div>
+
+      <!-- TENANT DETAIL -->
+      <div class="page" id="page-tenant-detail">
+        <div class="gold-line"></div>
+        <button class="btn btn-outline btn-sm" onclick="showPage('tenants')" style="margin-bottom:14px" id="back-btn">← Back</button>
+        <div class="detail-grid" id="tenant-detail-content"></div>
+      </div>
+
+      <!-- PAYMENTS -->
+      <div class="page" id="page-payments">
+        <div class="gold-line"></div>
+        <div class="pay-summary">
+          <div class="pay-card"><div class="pay-label-txt" id="pay-label1">Total Collected</div><div class="pay-amount" style="color:var(--success)">BD 10,300</div></div>
+          <div class="pay-card"><div class="pay-label-txt" id="pay-label2">Total Overdue</div><div class="pay-amount" style="color:var(--danger)">BD 2,100</div></div>
+        </div>
+        <div class="section-header">
+          <div class="section-title" id="pay-table-title">Payment Records</div>
+          <button class="btn btn-gold btn-sm" id="pdf-btn" onclick="alert('📄 Generating PDF report...\nReport: payments_report_May2026.pdf')">⬇ Download PDF</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th id="pth-tenant">Tenant</th><th id="pth-unit">Unit</th><th id="pth-month">Month</th>
+            <th id="pth-amount">Amount</th><th id="pth-status">Status</th><th id="pth-date">Date</th>
+          </tr></thead><tbody id="payments-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- MAINTENANCE FORM -->
+      <div class="page" id="page-maintenance-new">
+        <div class="gold-line"></div>
+        <div class="section-header"><div class="section-title" id="maint-form-title">Submit Maintenance Request</div></div>
+        <div class="maint-form">
+          <div class="form-row">
+            <div><label class="form-label" id="mf-tenant">Tenant Name</label><input class="form-input" type="text" placeholder="Ahmad Al-Mansoori" id="mf-tenant-input"></div>
+            <div><label class="form-label" id="mf-unit">Unit Number</label><input class="form-input" type="text" placeholder="A-201" id="mf-unit-input"></div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="form-label" id="mf-type">Issue Type</label>
+              <select class="form-select" id="mf-type-select">
+                <option id="mf-opt1">Plumbing</option>
+                <option id="mf-opt2">Electrical</option>
+                <option id="mf-opt3">AC / Cooling</option>
+                <option id="mf-opt4">Structural</option>
+                <option id="mf-opt5">Pest Control</option>
+                <option id="mf-opt6">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" id="mf-priority">Priority</label>
+              <div class="priority-opts">
+                <button class="prio-btn active high" onclick="setPrio(this,'high')" id="prio-high">High</button>
+                <button class="prio-btn" onclick="setPrio(this,'med')" id="prio-med">Medium</button>
+                <button class="prio-btn" onclick="setPrio(this,'low')" id="prio-low">Low</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row-full"><label class="form-label" id="mf-desc">Description</label><textarea class="form-textarea" id="mf-desc-input" placeholder="Describe the issue in detail..."></textarea></div>
+          <div class="form-row-full">
+            <label class="form-label" id="mf-photo">Attach Photo</label>
+            <div class="upload-area" onclick="alert('File picker would open here')">
+              <div style="font-size:24px;margin-bottom:6px">📎</div>
+              <div id="upload-text">Click to upload or drag &amp; drop</div>
+              <div style="font-size:11px;margin-top:4px;color:var(--text-muted)">PNG, JPG up to 10MB</div>
+            </div>
+          </div>
+          <button class="btn btn-gold" onclick="submitMaintenance()" id="mf-submit" style="width:100%;padding:12px;font-size:14px">Submit Request</button>
+        </div>
+      </div>
+
+      <!-- MAINTENANCE LIST -->
+      <div class="page" id="page-maint-list">
+        <div class="gold-line"></div>
+        <div class="section-header"><div class="section-title" id="maint-list-title">Maintenance Requests</div></div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="this.parentNode.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')" id="ml-all">All</button>
+          <button class="filter-btn" onclick="this.parentNode.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')" id="ml-urgent">Urgent 🔴</button>
+          <button class="filter-btn" onclick="this.parentNode.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')" id="ml-open">Open</button>
+          <button class="filter-btn" onclick="this.parentNode.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')" id="ml-closed">Closed</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th id="mth-id">#</th><th id="mth-tenant">Tenant</th><th id="mth-unit">Unit</th>
+            <th id="mth-type">Issue</th><th id="mth-priority">Priority</th>
+            <th id="mth-status">Status</th><th id="mth-action">Update</th>
+          </tr></thead><tbody id="maint-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- TRACKING -->
+      <div class="page" id="page-tracking">
+        <div class="gold-line"></div>
+        <div class="section-header"><div class="section-title" id="track-title">Maintenance Tracking #M-2024</div></div>
+        <div style="background:var(--bg-card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:20px;max-width:520px">
+          <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--text-muted)" id="track-unit-label">Unit</div>
+            <div style="font-size:14px;font-weight:600">B-301 — Ahmad Al-Mansoori</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px" id="track-issue-label">AC not cooling — High Priority</div>
+          </div>
+          <div class="timeline" id="timeline-content"></div>
+          <div style="margin-top:16px">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px" id="track-progress-label">Overall Progress</div>
+            <div style="background:var(--bg-card2);border-radius:20px;height:8px;overflow:hidden">
+              <div style="width:60%;height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));border-radius:20px"></div>
+            </div>
+            <div style="font-size:12px;color:var(--gold);margin-top:6px">60% Complete</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="page" id="page-notifications">
+        <div class="gold-line"></div>
+        <div class="section-title" id="notif-title" style="margin-bottom:14px">Notifications</div>
+        <div class="notif-panel" id="notif-panel"></div>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="page" id="page-login">
+        <div class="login-wrap">
+          <div class="login-card">
+            <div class="login-logo">
+              <div class="icon">🏢</div>
+              <h2 id="login-title">Property Management</h2>
+              <p id="login-sub">Secure Access Portal</p>
+            </div>
+            <div style="margin-bottom:12px">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px" id="role-label">Select Role</div>
+              <div class="role-select">
+                <div class="role-opt active" onclick="selectRole(this)">🏠<br><span id="rl-owner">Owner</span></div>
+                <div class="role-opt" onclick="selectRole(this)">🧑<br><span id="rl-tenant">Tenant</span></div>
+                <div class="role-opt" onclick="selectRole(this)">⚙️<br><span id="rl-admin">Admin</span></div>
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label" id="login-email-label">Email Address</label><input class="form-input" type="email" value="admin@propertypms.com"></div>
+            <div class="form-group"><label class="form-label" id="login-pass-label">Password</label><input class="form-input" type="password" value="••••••••"></div>
+            <button class="btn btn-gold btn-full" onclick="showPage('dashboard')" id="login-btn">Sign In →</button>
+            <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-muted)" id="login-demo">Demo credentials pre-filled</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let currentLang='en', currentFilter='all', searchQuery='', charts={};
+
+const T={
+  en:{
+    dashboard:'Dashboard',tenants:'Tenants',payments:'Payments',maintenance:'Maintenance',
+    requests:'Requests',tracking:'Tracking',notifications:'Notifications',login:'Login / Roles',
+    main:'Main',ops:'Operations',sys:'System',
+    s1:'Properties',s1b:'Units managed',s2:'Tenants',s2b:'Active leases',
+    s3:'Contracts',s3b:'Active',s4:'Revenue',s4b:'This month',s5:'Late',s5b:'Overdue payments',
+    s6:'Maintenance',s6b:'Open requests',
+    kpi1:'Collection Rate',kpi2:'Paid Tenants',kpi3:'Overdue Amount',
+    tenantTable:'Tenant Overview',viewAll:'View All →',
+    thName:'Tenant',thUnit:'Unit',thType:'Type',thRent:'Rent (BD)',thStatus:'Status',
+    thDue:'Due Date',thContract:'Contract',thAction:'Action',
+    allTenants:'All Tenants',filterAll:'All',filterPaid:'Paid ✅',filterLate:'Late ⚠️',
+    filterApt:'Apartments',filterShop:'Shops',
+    payLabel1:'Total Collected',payLabel2:'Total Overdue',payTableTitle:'Payment Records',pdfBtn:'⬇ Download PDF',
+    pthTenant:'Tenant',pthUnit:'Unit',pthMonth:'Month',pthAmount:'Amount',pthStatus:'Status',pthDate:'Date',
+    maintFormTitle:'Submit Maintenance Request',mfTenant:'Tenant Name',mfUnit:'Unit Number',
+    mfType:'Issue Type',mfPriority:'Priority',mfDesc:'Description',mfPhoto:'Attach Photo',
+    uploadText:'Click to upload or drag & drop',mfSubmit:'Submit Request',
+    mfOpt1:'Plumbing',mfOpt2:'Electrical',mfOpt3:'AC / Cooling',mfOpt4:'Structural',
+    mfOpt5:'Pest Control',mfOpt6:'Other',
+    prioHigh:'High',prioMed:'Medium',prioLow:'Low',
+    maintListTitle:'Maintenance Requests',mlAll:'All',mlUrgent:'Urgent 🔴',mlOpen:'Open',mlClosed:'Closed',
+    mthId:'#',mthTenant:'Tenant',mthUnit:'Unit',mthType:'Issue',mthPriority:'Priority',mthStatus:'Status',mthAction:'Update',
+    trackTitle:'Maintenance Tracking #M-2024',trackUnitLabel:'Unit / Tenant',trackIssueLabel:'AC not cooling — High Priority',
+    trackProgressLabel:'Overall Progress',notifTitle:'Notifications',
+    loginTitle:'Property Management',loginSub:'Secure Access Portal',roleLabel:'Select Role',
+    rlOwner:'Owner',rlTenant:'Tenant',rlAdmin:'Admin',
+    loginEmailLabel:'Email Address',loginPassLabel:'Password',loginBtn:'Sign In →',loginDemo:'Demo credentials pre-filled',
+    backBtn:'← Back',chart1Title:'Monthly Revenue (BD)',chart2Title:'Collection Status',
+    searchPlaceholder:'Search tenants...',
+    paidBadge:'Paid',lateBadge:'Late',activeBadge:'Active',expiringBadge:'Expiring Soon',
+    viewBtn:'View',apt:'Apartment',shop:'Shop',
+    tl1:'Request Received',tl1t:'Today 09:14 AM',
+    tl2:'Under Review',tl2t:'Today 10:30 AM',
+    tl3:'Technician Assigned',tl3t:'Today 11:00 AM — Mohammed Yousif',
+    tl4:'In Progress',tl4t:'Ongoing...',
+    tl5:'Completed',tl5t:'Not yet',
+  },
+  ar:{
+    dashboard:'لوحة التحكم',tenants:'المستأجرون',payments:'المدفوعات',maintenance:'الصيانة',
+    requests:'الطلبات',tracking:'التتبع',notifications:'الإشعارات',login:'تسجيل الدخول',
+    main:'الرئيسية',ops:'العمليات',sys:'النظام',
+    s1:'العقارات',s1b:'وحدات مُدارة',s2:'المستأجرون',s2b:'عقود نشطة',
+    s3:'العقود',s3b:'نشط',s4:'الإيرادات',s4b:'هذا الشهر',s5:'المتأخرون',s5b:'مدفوعات متأخرة',
+    s6:'الصيانة',s6b:'طلبات مفتوحة',
+    kpi1:'نسبة التحصيل',kpi2:'المستأجرون الدافعون',kpi3:'المبلغ المتأخر',
+    tenantTable:'نظرة عامة على المستأجرين',viewAll:'عرض الكل →',
+    thName:'المستأجر',thUnit:'الوحدة',thType:'النوع',thRent:'الإيجار (د.ب)',thStatus:'الحالة',
+    thDue:'تاريخ الاستحقاق',thContract:'العقد',thAction:'إجراء',
+    allTenants:'جميع المستأجرين',filterAll:'الكل',filterPaid:'مدفوع ✅',filterLate:'متأخر ⚠️',
+    filterApt:'شقق',filterShop:'محلات',
+    payLabel1:'إجمالي المحصل',payLabel2:'إجمالي المتأخر',payTableTitle:'سجل المدفوعات',pdfBtn:'⬇ تحميل PDF',
+    pthTenant:'المستأجر',pthUnit:'الوحدة',pthMonth:'الشهر',pthAmount:'المبلغ',pthStatus:'الحالة',pthDate:'التاريخ',
+    maintFormTitle:'إرسال طلب صيانة',mfTenant:'اسم المستأجر',mfUnit:'رقم الوحدة',
+    mfType:'نوع المشكلة',mfPriority:'درجة الأهمية',mfDesc:'وصف المشكلة',mfPhoto:'رفع صورة',
+    uploadText:'انقر للرفع أو اسحب وأفلت',mfSubmit:'إرسال الطلب',
+    mfOpt1:'سباكة',mfOpt2:'كهرباء',mfOpt3:'مكيف / تبريد',mfOpt4:'إنشائية',
+    mfOpt5:'مكافحة حشرات',mfOpt6:'أخرى',
+    prioHigh:'عاجل',prioMed:'عادي',prioLow:'غير عاجل',
+    maintListTitle:'طلبات الصيانة',mlAll:'الكل',mlUrgent:'عاجل 🔴',mlOpen:'مفتوح',mlClosed:'مغلق',
+    mthId:'#',mthTenant:'المستأجر',mthUnit:'الوحدة',mthType:'النوع',mthPriority:'الأولوية',mthStatus:'الحالة',mthAction:'تحديث',
+    trackTitle:'تتبع طلب الصيانة #M-2024',trackUnitLabel:'الوحدة / المستأجر',trackIssueLabel:'المكيف لا يبرد — أولوية عالية',
+    trackProgressLabel:'نسبة الإنجاز',notifTitle:'الإشعارات',
+    loginTitle:'نظام إدارة العقارات',loginSub:'بوابة الدخول الآمن',roleLabel:'اختر الدور',
+    rlOwner:'مالك',rlTenant:'مستأجر',rlAdmin:'مدير',
+    loginEmailLabel:'البريد الإلكتروني',loginPassLabel:'كلمة المرور',loginBtn:'تسجيل الدخول →',loginDemo:'بيانات تجريبية مُعبأة',
+    backBtn:'→ رجوع',chart1Title:'الإيرادات الشهرية (د.ب)',chart2Title:'حالة التحصيل',
+    searchPlaceholder:'البحث عن مستأجر...',
+    paidBadge:'مدفوع',lateBadge:'متأخر',activeBadge:'نشط',expiringBadge:'ينتهي قريباً',
+    viewBtn:'عرض',apt:'شقة',shop:'محل',
+    tl1:'تم الاستلام',tl1t:'اليوم 09:14 ص',
+    tl2:'قيد المراجعة',tl2t:'اليوم 10:30 ص',
+    tl3:'تم تعيين فني',tl3t:'اليوم 11:00 ص — محمد يوسف',
+    tl4:'قيد التنفيذ',tl4t:'جارٍ التنفيذ...',
+    tl5:'تم الانتهاء',tl5t:'لم يكتمل بعد',
+  }
+};
+
+const tenants=[
+  {id:1,name:{en:'Ahmad Al-Mansoori',ar:'أحمد المنصوري'},unit:'A-101',type:'apt',rent:450,paid:true,due:'01 Jun 2026',contract:'active',phone:'+973 3311 2244',email:'ahmad@email.com',start:'01 Jun 2025',end:'31 May 2027'},
+  {id:2,name:{en:'Fatima Al-Khalifa',ar:'فاطمة الخليفة'},unit:'B-201',type:'apt',rent:600,paid:false,due:'01 May 2026',contract:'active',phone:'+973 3322 1155',email:'fatima@email.com',start:'01 Jan 2025',end:'31 Dec 2026'},
+  {id:3,name:{en:'Yousif Al-Zayani',ar:'يوسف الزياني'},unit:'C-05',type:'shop',rent:850,paid:true,due:'15 Jun 2026',contract:'expiring',phone:'+973 3366 7788',email:'yousif@email.com',start:'15 Jun 2024',end:'14 Jun 2026'},
+  {id:4,name:{en:'Maryam Hassan',ar:'مريم حسن'},unit:'A-203',type:'apt',rent:500,paid:false,due:'01 May 2026',contract:'active',phone:'+973 3377 9900',email:'maryam@email.com',start:'01 Mar 2025',end:'28 Feb 2027'},
+  {id:5,name:{en:'Khalid Al-Rumaihi',ar:'خالد الرميحي'},unit:'D-02',type:'shop',rent:1200,paid:true,due:'20 Jun 2026',contract:'active',phone:'+973 3399 4433',email:'khalid@email.com',start:'20 Dec 2024',end:'19 Dec 2026'},
+];
+
+const payments=[
+  {tenant:{en:'Ahmad Al-Mansoori',ar:'أحمد المنصوري'},unit:'A-101',month:{en:'May 2026',ar:'مايو 2026'},amount:'BD 450',status:'paid',date:'28 Apr 2026'},
+  {tenant:{en:'Fatima Al-Khalifa',ar:'فاطمة الخليفة'},unit:'B-201',month:{en:'May 2026',ar:'مايو 2026'},amount:'BD 600',status:'late',date:'—'},
+  {tenant:{en:'Yousif Al-Zayani',ar:'يوسف الزياني'},unit:'C-05',month:{en:'May 2026',ar:'مايو 2026'},amount:'BD 850',status:'paid',date:'02 May 2026'},
+  {tenant:{en:'Maryam Hassan',ar:'مريم حسن'},unit:'A-203',month:{en:'May 2026',ar:'مايو 2026'},amount:'BD 500',status:'late',date:'—'},
+  {tenant:{en:'Khalid Al-Rumaihi',ar:'خالد الرميحي'},unit:'D-02',month:{en:'May 2026',ar:'مايو 2026'},amount:'BD 1,200',status:'paid',date:'01 May 2026'},
+  {tenant:{en:'Ahmad Al-Mansoori',ar:'أحمد المنصوري'},unit:'A-101',month:{en:'Apr 2026',ar:'أبريل 2026'},amount:'BD 450',status:'paid',date:'30 Mar 2026'},
+  {tenant:{en:'Yousif Al-Zayani',ar:'يوسف الزياني'},unit:'C-05',month:{en:'Apr 2026',ar:'أبريل 2026'},amount:'BD 850',status:'paid',date:'01 Apr 2026'},
+];
+
+const maintRequests=[
+  {id:'M-001',tenant:{en:'Ahmad Al-Mansoori',ar:'أحمد المنصوري'},unit:'A-101',type:{en:'AC / Cooling',ar:'مكيف'},priority:'high',status:'in-progress'},
+  {id:'M-002',tenant:{en:'Fatima Al-Khalifa',ar:'فاطمة الخليفة'},unit:'B-201',type:{en:'Plumbing',ar:'سباكة'},priority:'med',status:'open'},
+  {id:'M-003',tenant:{en:'Maryam Hassan',ar:'مريم حسن'},unit:'A-203',type:{en:'Electrical',ar:'كهرباء'},priority:'high',status:'closed'},
+  {id:'M-004',tenant:{en:'Khalid Al-Rumaihi',ar:'خالد الرميحي'},unit:'D-02',type:{en:'Structural',ar:'إنشائية'},priority:'low',status:'open'},
+];
+
+const notificationsData=[
+  {type:'red',icon:'⚠️',title:{en:'Late Payment — Fatima Al-Khalifa',ar:'مدفوعات متأخرة — فاطمة الخليفة'},desc:{en:'Unit B-201 — May 2026 rent overdue',ar:'الوحدة B-201 — إيجار مايو 2026 متأخر'},time:'2h ago',unread:true},
+  {type:'red',icon:'⚠️',title:{en:'Late Payment — Maryam Hassan',ar:'مدفوعات متأخرة — مريم حسن'},desc:{en:'Unit A-203 — May 2026 rent overdue',ar:'الوحدة A-203 — إيجار مايو 2026 متأخر'},time:'3h ago',unread:true},
+  {type:'gold',icon:'🔧',title:{en:'New Maintenance Request',ar:'طلب صيانة جديد'},desc:{en:'M-002: Plumbing issue — B-201',ar:'M-002: مشكلة سباكة — B-201'},time:'5h ago',unread:true},
+  {type:'gold',icon:'📝',title:{en:'Contract Expiring Soon',ar:'عقد ينتهي قريباً'},desc:{en:'Yousif Al-Zayani — C-05 expires 14 Jun 2026',ar:'يوسف الزياني — C-05 ينتهي 14 يونيو 2026'},time:'1d ago',unread:false},
+  {type:'blue',icon:'✅',title:{en:'Payment Received',ar:'تم استلام دفعة'},desc:{en:'Khalid Al-Rumaihi paid BD 1,200 — D-02',ar:'خالد الرميحي دفع 1,200 د.ب — D-02'},time:'1d ago',unread:false},
+];
+
+function t(k){return T[currentLang][k]||k;}
+
+function setLang(lang){
+  currentLang=lang;
+  document.getElementById('app').classList.toggle('rtl',lang==='ar');
+  document.getElementById('btn-en').classList.toggle('active',lang==='en');
+  document.getElementById('btn-ar').classList.toggle('active',lang==='ar');
+  applyTranslations();renderAll();
+}
+
+function applyTranslations(){
+  const ids={
+    'nl-dashboard':'dashboard','nl-tenants':'tenants','nl-payments':'payments',
+    'nl-maint':'maintenance','nl-maint-list':'requests','nl-track':'tracking',
+    'nl-notif':'notifications','nl-login':'login',
+    'nav-main-label':'main','nav-ops-label':'ops','nav-sys-label':'sys',
+    's1':'s1','s1b':'s1b','s2':'s2','s2b':'s2b','s3':'s3','s3b':'s3b',
+    's4':'s4','s4b':'s4b','s5':'s5','s5b':'s5b','s6':'s6','s6b':'s6b',
+    'kpi1l':'kpi1','kpi2l':'kpi2','kpi3l':'kpi3',
+    'tenant-table-title':'tenantTable','view-all-btn':'viewAll',
+    'th-name':'thName','th-unit':'thUnit','th-type':'thType','th-rent':'thRent',
+    'th-status':'thStatus','th-due':'thDue','th-contract':'thContract','th-action':'thAction',
+    'th2-name':'thName','th2-unit':'thUnit','th2-type':'thType','th2-rent':'thRent',
+    'th2-status':'thStatus','th2-contract':'thContract','th2-action':'thAction',
+    'all-tenants-title':'allTenants','f-all':'filterAll','f-paid':'filterPaid',
+    'f-late':'filterLate','f-apt':'filterApt','f-shop':'filterShop',
+    'pay-label1':'payLabel1','pay-label2':'payLabel2','pay-table-title':'payTableTitle','pdf-btn':'pdfBtn',
+    'pth-tenant':'pthTenant','pth-unit':'pthUnit','pth-month':'pthMonth','pth-amount':'pthAmount',
+    'pth-status':'pthStatus','pth-date':'pthDate',
+    'maint-form-title':'maintFormTitle','mf-tenant':'mfTenant','mf-unit':'mfUnit',
+    'mf-type':'mfType','mf-priority':'mfPriority','mf-desc':'mfDesc','mf-photo':'mfPhoto',
+    'upload-text':'uploadText','mf-submit':'mfSubmit',
+    'mf-opt1':'mfOpt1','mf-opt2':'mfOpt2','mf-opt3':'mfOpt3','mf-opt4':'mfOpt4',
+    'mf-opt5':'mfOpt5','mf-opt6':'mfOpt6',
+    'prio-high':'prioHigh','prio-med':'prioMed','prio-low':'prioLow',
+    'maint-list-title':'maintListTitle','ml-all':'mlAll','ml-urgent':'mlUrgent',
+    'ml-open':'mlOpen','ml-closed':'mlClosed',
+    'mth-id':'mthId','mth-tenant':'mthTenant','mth-unit':'mthUnit','mth-type':'mthType',
+    'mth-priority':'mthPriority','mth-status':'mthStatus','mth-action':'mthAction',
+    'track-title':'trackTitle','track-unit-label':'trackUnitLabel','track-issue-label':'trackIssueLabel',
+    'track-progress-label':'trackProgressLabel','notif-title':'notifTitle',
+    'login-title':'loginTitle','login-sub':'loginSub','role-label':'roleLabel',
+    'rl-owner':'rlOwner','rl-tenant':'rlTenant','rl-admin':'rlAdmin',
+    'login-email-label':'loginEmailLabel','login-pass-label':'loginPassLabel',
+    'login-btn':'loginBtn','login-demo':'loginDemo',
+    'back-btn':'backBtn','chart1-title':'chart1Title','chart2-title':'chart2Title',
+  };
+  Object.entries(ids).forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const val=t(key);
+    if(el.tagName==='INPUT')el.placeholder=val;
+    else el.textContent=val;
+  });
+  const si=document.getElementById('search-input');
+  if(si)si.placeholder=t('searchPlaceholder');
+  const si2=document.getElementById('search-input2');
+  if(si2)si2.placeholder=t('searchPlaceholder');
+}
+
+function getFiltered(){
+  return tenants.filter(tn=>{
+    const name=tn.name[currentLang].toLowerCase();
+    const ms=!searchQuery||name.includes(searchQuery.toLowerCase())||tn.unit.toLowerCase().includes(searchQuery.toLowerCase());
+    let mf=true;
+    if(currentFilter==='paid')mf=tn.paid;
+    else if(currentFilter==='late')mf=!tn.paid;
+    else if(currentFilter==='apartment')mf=tn.type==='apt';
+    else if(currentFilter==='shop')mf=tn.type==='shop';
+    return ms&&mf;
+  });
+}
+
+function renderTenants(tbodyId,showDue){
+  const tb=document.getElementById(tbodyId);if(!tb)return;
+  tb.innerHTML=getFiltered().map(tn=>`<tr>
+    <td><b style="color:var(--text-primary)">${tn.name[currentLang]}</b></td>
+    <td><span style="color:var(--gold)">${tn.unit}</span></td>
+    <td>${tn.type==='apt'?t('apt'):t('shop')}</td>
+    <td style="color:var(--text-primary);font-weight:600">${tn.rent}</td>
+    <td><span class="badge ${tn.paid?'badge-success':'badge-danger'}">${tn.paid?t('paidBadge'):t('lateBadge')}</span></td>
+    ${showDue?`<td style="font-size:12px">${tn.due}</td>`:''}
+    <td><span class="badge ${tn.contract==='expiring'?'badge-warning':'badge-gold'}">${tn.contract==='expiring'?t('expiringBadge'):t('activeBadge')}</span></td>
+    <td><button class="btn btn-outline btn-sm" onclick="showTenantDetail(${tn.id})">${t('viewBtn')}</button></td>
+  </tr>`).join('');
+}
+
+function showTenantDetail(id){
+  const tn=tenants.find(x=>x.id===id);if(!tn)return;
+  const ph=payments.filter(p=>p.unit===tn.unit);
+  document.getElementById('tenant-detail-content').innerHTML=`
+    <div class="detail-card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#000">${tn.name.en.charAt(0)}</div>
+        <div><div style="font-size:16px;font-weight:600;color:var(--text-primary)">${tn.name[currentLang]}</div><div style="font-size:12px;color:var(--text-muted)">${tn.unit}</div></div>
+        <span class="badge ${tn.paid?'badge-success':'badge-danger'}" style="margin-left:auto">${tn.paid?t('paidBadge'):t('lateBadge')}</span>
+      </div>
+      <div class="detail-row"><span class="detail-key">📞</span><span class="detail-val">${tn.phone}</span></div>
+      <div class="detail-row"><span class="detail-key">✉️</span><span class="detail-val">${tn.email}</span></div>
+      <div class="detail-row"><span class="detail-key">${t('thType')}</span><span class="detail-val">${tn.type==='apt'?t('apt'):t('shop')}</span></div>
+      <div class="detail-row"><span class="detail-key">${t('thUnit')}</span><span class="detail-val" style="color:var(--gold)">${tn.unit}</span></div>
+      <div class="detail-row"><span class="detail-key">📅 Start</span><span class="detail-val">${tn.start}</span></div>
+      <div class="detail-row"><span class="detail-key">📅 End</span><span class="detail-val">${tn.end}</span></div>
+      <div class="detail-row"><span class="detail-key">${t('thRent')}</span><span class="detail-val" style="color:var(--gold);font-size:16px">BD ${tn.rent}</span></div>
+      <div style="margin-top:14px"><button class="btn btn-gold btn-sm" onclick="alert('📄 Lease Agreement\\n\\nGenerating PDF for ${tn.name.en}...')">📄 View Lease PDF</button></div>
+    </div>
+    <div class="detail-card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text-primary)">Payment History</div>
+      <table style="width:100%"><thead><tr><th>${t('pthMonth')}</th><th>${t('pthAmount')}</th><th>${t('pthStatus')}</th><th>${t('pthDate')}</th></tr></thead>
+      <tbody>${ph.map(p=>`<tr>
+        <td>${p.month[currentLang]}</td>
+        <td style="color:var(--gold);font-weight:600">${p.amount}</td>
+        <td><span class="badge ${p.status==='paid'?'badge-success':'badge-danger'}">${p.status==='paid'?t('paidBadge'):t('lateBadge')}</span></td>
+        <td style="font-size:11px">${p.date}</td>
+      </tr>`).join('')}</tbody></table>
+    </div>`;
+  showPage('tenant-detail');
+}
+
+function renderPayments(){
+  const tb=document.getElementById('payments-tbody');if(!tb)return;
+  tb.innerHTML=payments.map(p=>`<tr>
+    <td style="color:var(--text-primary);font-weight:500">${p.tenant[currentLang]}</td>
+    <td style="color:var(--gold)">${p.unit}</td><td>${p.month[currentLang]}</td>
+    <td style="font-weight:600">${p.amount}</td>
+    <td><span class="badge ${p.status==='paid'?'badge-success':'badge-danger'}">${p.status==='paid'?t('paidBadge'):t('lateBadge')}</span></td>
+    <td style="font-size:12px">${p.date}</td>
+  </tr>`).join('');
+}
+
+function renderMaintenance(){
+  const tb=document.getElementById('maint-tbody');if(!tb)return;
+  const sl={en:{'in-progress':'In Progress','open':'Open','closed':'Closed'},ar:{'in-progress':'قيد التنفيذ','open':'مفتوح','closed':'مغلق'}};
+  const pl={en:{high:'🔴 High',med:'🟡 Medium',low:'🟢 Low'},ar:{high:'🔴 عاجل',med:'🟡 عادي',low:'🟢 غير عاجل'}};
+  const sc={'in-progress':'badge-warning','open':'badge-info','closed':'badge-success'};
+  tb.innerHTML=maintRequests.map(r=>`<tr>
+    <td style="color:var(--gold)">${r.id}</td>
+    <td style="color:var(--text-primary)">${r.tenant[currentLang]}</td>
+    <td>${r.unit}</td><td>${r.type[currentLang]}</td>
+    <td>${pl[currentLang][r.priority]}</td>
+    <td><span class="badge ${sc[r.status]}">${sl[currentLang][r.status]}</span></td>
+    <td><select class="form-select" style="padding:4px 8px;font-size:11px;width:auto" onchange="updateMaint('${r.id}',this.value)">
+      <option value="open" ${r.status==='open'?'selected':''}>${sl[currentLang].open}</option>
+      <option value="in-progress" ${r.status==='in-progress'?'selected':''}>${sl[currentLang]['in-progress']}</option>
+      <option value="closed" ${r.status==='closed'?'selected':''}>${sl[currentLang].closed}</option>
+    </select></td>
+  </tr>`).join('');
+}
+
+function updateMaint(id,status){const r=maintRequests.find(x=>x.id===id);if(r){r.status=status;renderMaintenance();}}
+
+function renderTimeline(){
+  const tl=document.getElementById('timeline-content');if(!tl)return;
+  const steps=[{k:'tl1',tk:'tl1t',done:true},{k:'tl2',tk:'tl2t',done:true},{k:'tl3',tk:'tl3t',done:true},{k:'tl4',tk:'tl4t',active:true},{k:'tl5',tk:'tl5t',done:false}];
+  tl.innerHTML=steps.map(s=>`<div class="tl-item">
+    <div class="tl-dot ${s.done?'done':s.active?'active-step':'pending'}">${s.done?'✓':s.active?'◉':'○'}</div>
+    <div class="tl-content"><div class="tl-title">${t(s.k)}</div><div class="tl-time">${t(s.tk)}</div></div>
+  </div>`).join('');
+}
+
+function renderNotifications(){
+  const panel=document.getElementById('notif-panel');if(!panel)return;
+  panel.innerHTML=`<div class="notif-header">
+    <span style="font-size:14px;font-weight:600;color:var(--text-primary)">${t('notifTitle')}</span>
+    <span style="font-size:12px;color:var(--gold)">5 ${currentLang==='ar'?'غير مقروء':'unread'}</span>
+  </div>`+notificationsData.map(n=>`<div class="notif-item ${n.unread?'unread':''}">
+    <div class="notif-icon-box ${n.type}">${n.icon}</div>
+    <div style="flex:1"><div class="notif-title">${n.title[currentLang]}</div><div class="notif-desc">${n.desc[currentLang]}</div></div>
+    <div class="notif-time-txt">${n.time}</div>
+  </div>`).join('');
+}
+
+function renderCharts(){
+  if(charts.revenue){charts.revenue.destroy();}
+  if(charts.collection){charts.collection.destroy();}
+  const rc=document.getElementById('revenueChart');
+  if(rc){
+    charts.revenue=new Chart(rc,{type:'bar',data:{
+      labels:['Dec','Jan','Feb','Mar','Apr','May'],
+      datasets:[{label:currentLang==='ar'?'الإيرادات':'Revenue',data:[11200,11800,10500,12100,11900,12400],
+        backgroundColor:'rgba(201,168,76,0.7)',borderColor:'rgba(201,168,76,1)',borderWidth:1,borderRadius:4}]
+    },options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#A89878',font:{size:11}},grid:{color:'rgba(255,255,255,.05)'}},
+        y:{ticks:{color:'#A89878',font:{size:11},callback:v=>'BD '+v.toLocaleString()},grid:{color:'rgba(255,255,255,.05)'}}}}});
+  }
+  const cc=document.getElementById('collectionChart');
+  if(cc){
+    charts.collection=new Chart(cc,{type:'doughnut',data:{
+      labels:currentLang==='ar'?['مدفوع','متأخر','معلق']:['Paid','Late','Pending'],
+      datasets:[{data:[15,2,1],backgroundColor:['rgba(46,204,113,.8)','rgba(231,76,60,.8)','rgba(243,156,18,.8)'],borderColor:['#1a1a1a'],borderWidth:2}]
+    },options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#A89878',font:{size:11},padding:8}}}}});
+  }
+}
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const nm={'dashboard':'nav-dashboard','tenants':'nav-tenants','payments':'nav-payments',
+    'maintenance-new':'nav-maint','maint-list':'nav-maint-list','tracking':'nav-track',
+    'notifications':'nav-notif','login':'nav-login','tenant-detail':'nav-tenants'};
+  if(nm[name]){const ni=document.getElementById(nm[name]);if(ni)ni.classList.add('active');}
+  const tm={'dashboard':'dashboard','tenants':'tenants','payments':'payments','maintenance-new':'maintenance',
+    'maint-list':'requests','tracking':'tracking','notifications':'notifications','login':'login','tenant-detail':'tenants'};
+  const tt=document.getElementById('page-title');
+  if(tt&&tm[name])tt.textContent=t(tm[name]);
+  if(name==='dashboard')setTimeout(renderCharts,150);
+}
+
+function filterTenants(q){searchQuery=q;renderTenants('tenants-tbody',true);renderTenants('tenants-tbody2',false);}
+function filterStatus(s,btn){currentFilter=s;btn.closest('.filter-row').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTenants('tenants-tbody2',false);}
+function setPrio(btn,prio){btn.closest('.priority-opts').querySelectorAll('.prio-btn').forEach(b=>{b.classList.remove('active','high','med','low');});btn.classList.add('active',prio);}
+function selectRole(el){el.closest('.role-select').querySelectorAll('.role-opt').forEach(r=>r.classList.remove('active'));el.classList.add('active');}
+function submitMaintenance(){
+  const name=document.getElementById('mf-tenant-input').value;
+  const unit=document.getElementById('mf-unit-input').value;
+  alert((currentLang==='ar'?'✅ تم إرسال طلب الصيانة!\n\nالمستأجر: ':'✅ Request submitted!\n\nTenant: ')+(name||'—')+'\n'+(currentLang==='ar'?'الوحدة: ':'Unit: ')+(unit||'—'));
+  showPage('maint-list');
+}
+
+function renderAll(){
+  renderTenants('tenants-tbody',true);renderTenants('tenants-tbody2',false);
+  renderPayments();renderMaintenance();renderTimeline();renderNotifications();
+  setTimeout(renderCharts,200);
+}
+
+renderAll();applyTranslations();
+</script>
+</body>
+</html>
